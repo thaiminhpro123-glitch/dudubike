@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DUDU Bike - Xanh SM v15h3</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --cyan: #00b0b9;
+            --cyan-dark: #008a91;
+            --cyan-light: #e0f7f9;
+            --orange: #ff8c00;
+            --white: #fff;
+            --text: #1a3c3e;
+            --text-light: #5a7a7c;
+            --shadow: 0 8px 30px rgba(0, 176, 185, 0.2);
+            --radius: 25px;
+            --radius-sm: 18px;
+            --pink: #e91e63;
+            --green: #4caf50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(160deg, #e8f8f9, #d4f1f3, #e0f7f9, #fdf2e0);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .phone-frame {
+            width: 100%;
+            max-width: 440px;
+            height: 92vh;
+            max-height: 900px;
+            background: var(--white);
+            border-radius: 36px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 0 0 8px #1a1a1a, 0 0 0 11px #333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dynamic-island {
+            width: 100px;
+            height: 28px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            margin: 8px auto 2px;
+            flex-shrink: 0;
+        }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 14px;
+            min-height: 100%;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 13px 22px;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: inherit;
+            outline: none;
+            color: #fff;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .btn:active {
+            transform: scale(0.94);
+        }
+        .btn-primary {
+            background: var(--cyan);
+            box-shadow: var(--shadow);
+        }
+        .btn-orange {
+            background: var(--orange);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.35);
+        }
+        .btn-outline {
+            background: #fff;
+            color: var(--cyan);
+            border: 2.5px solid var(--cyan);
+            box-shadow: 0 4px 15px rgba(0, 176, 185, 0.15);
+        }
+        .btn-pink {
+            background: var(--pink);
+            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.3);
+        }
+        .btn-green {
+            background: var(--green);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+        }
+        .btn-sm {
+            padding: 9px 16px;
+            font-size: 13px;
+            border-radius: var(--radius-sm);
+        }
+        .btn-xs {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 14px;
+        }
+        .btn-full {
+            width: 100%;
+            justify-content: center;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .input-bubble {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 2px solid #e0eaea;
+            font-size: 14px;
+            font-family: inherit;
+            background: #f9fdfd;
+            color: var(--text);
+            outline: none;
+            transition: 0.3s;
+        }
+        .input-bubble:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 4px rgba(0, 176, 185, 0.08);
+            background: #fff;
+        }
+
+        /* Ô tìm kiếm */
+        .search-box {
+            width: 100%;
+            position: relative;
+            margin-bottom: 6px;
+        }
+        .search-box .input-bubble {
+            padding-right: 44px;
+        }
+        .search-icon {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--cyan);
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .search-results {
+            width: 100%;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            max-height: 180px;
+            overflow-y: auto;
+            display: none;
+            margin-bottom: 6px;
+            border: 2px solid var(--cyan-light);
+        }
+        .search-results.show {
+            display: block;
+        }
+        .search-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: var(--text);
+            transition: 0.2s;
+        }
+        .search-item:hover,
+        .search-item:active {
+            background: var(--cyan-light);
+        }
+        .search-item .s-name {
+            font-weight: 600;
+        }
+        .search-item .s-addr {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .map-container {
+            width: 100%;
+            height: 240px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 3px solid #fff;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Nút vị trí */
+        .location-btns {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .location-btns .btn {
+            flex: 1;
+            min-width: 100px;
+            font-size: 12px;
+            padding: 10px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .quick-locations {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .quick-loc-btn {
+            flex: 1;
+            min-width: 85px;
+            padding: 9px 8px;
+            border-radius: var(--radius-sm);
+            background: var(--cyan-light);
+            border: 2px solid transparent;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            color: var(--cyan-dark);
+            text-align: center;
+            font-family: inherit;
+        }
+        .quick-loc-btn.active {
+            background: var(--cyan);
+            color: #fff;
+        }
+
+        .bubble-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid rgba(0, 176, 185, 0.08);
+        }
+
+        .screen-header {
+            text-align: center;
+            margin-bottom: 6px;
+            width: 100%;
+            position: relative;
+        }
+        .greeting-mom {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--cyan-dark);
+            margin-bottom: 2px;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .secret-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: transparent;
+            border: 2px dashed rgba(0, 176, 185, 0.25);
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(0, 176, 185, 0.4);
+        }
+
+        /* Info row */
+        .info-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-light);
+            align-items: center;
+        }
+        .info-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        .dot-mom {
+            background: var(--pink);
+        }
+        .dot-dest {
+            background: var(--orange);
+        }
+        .dot-driver {
+            background: var(--cyan);
+        }
+
+        .order-item {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 14px;
+            box-shadow: 0 4px 15px rgba(0, 176, 185, 0.15);
+            margin-bottom: 8px;
+            border-left: 5px solid var(--orange);
+        }
+        .order-item .order-dest {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .order-item .order-meta {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 3px;
+        }
+        .order-item .order-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .badge-waiting {
+            background: #fff3e0;
+            color: #e67e00;
+        }
+        .badge-coming {
+            background: #fff8e1;
+            color: #f57f17;
+        }
+        .badge-done {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .popup-overlay.show {
+            display: flex;
+        }
+        .popup-bubble {
+            background: #fff;
+            border-radius: 30px;
+            padding: 28px 20px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            max-width: 360px;
+            width: 90%;
+            z-index: 1001;
+        }
+        .popup-bubble h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--orange);
+            margin: 8px 0;
+        }
+        .popup-bubble p {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 14px;
+            line-height: 1.6;
+        }
+
+        .password-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+        }
+        .password-popup.show {
+            display: flex;
+        }
+        .password-bubble {
+            background: #fff;
+            border-radius: 30px;
+            padding: 26px 20px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            max-width: 340px;
+            width: 90%;
+            z-index: 2001;
+        }
+        .password-bubble .error-msg {
+            color: #e53935;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a3c3e;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 13px;
+            z-index: 3000;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+        .toast.error {
+            background: #e53935;
+        }
+        .toast.success {
+            background: #2e7d32;
+        }
+
+        @media (max-width: 480px) {
+            .phone-frame {
+                border-radius: 0;
+                max-height: 100vh;
+                height: 100vh;
+                box-shadow: none;
+                max-width: 100%;
+            }
+            .map-container {
+                height: 200px;
+            }
+            .btn {
+                padding: 11px 16px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="app-content" id="appContent">
+
+            <!-- ========== MÀN CHỌN VAI TRÒ ========== -->
+            <div class="screen active" id="roleScreen">
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%;">
+                    <div style="font-size:48px;">🛵💨</div>
+                    <div style="font-size:26px; font-weight:800; color:var(--cyan);">DUDU Bike</div>
+                    <div style="font-size:14px; color:var(--text-light); margin-bottom:24px;">Xanh SM v15h3</div>
+                    <p style="font-size:15px; color:var(--text-light); margin-bottom:20px;">Ai đang dùng ạ?</p>
+                    <button class="btn btn-primary btn-full" id="btnMom" style="margin-bottom:10px; max-width:300px;">👩‍🦰 Mẹ đặt xe</button>
+                    <button class="btn btn-orange btn-full" id="btnDriver" style="max-width:300px;">🧑‍✈️ Tài xế Đu Đủ</button>
+                </div>
+            </div>
+
+            <!-- ========== MÀN MẸ ========== -->
+            <div class="screen" id="momScreen">
+                <div class="screen-header">
+                    <button class="secret-btn" id="secretBtn">🔑</button>
+                    <div class="greeting-mom">Chào mẹ yêu! ❤️</div>
+                    <div class="subtitle">Đu Đủ sẽ đến đón mẹ bằng Galaxy CT20 🛵</div>
+                </div>
+
+                <!-- Ô TÌM KIẾM ĐỊA CHỈ -->
+                <div class="search-box">
+                    <input type="text" class="input-bubble" id="searchInput" placeholder="🔍 Mẹ nhập địa chỉ muốn đến..." />
+                    <button class="search-icon" id="searchBtn">🔍</button>
+                </div>
+                <div class="search-results" id="searchResults"></div>
+
+                <!-- NÚT VỊ TRÍ -->
+                <div class="location-btns">
+                    <button class="btn btn-pink btn-sm" id="btnMyLocation">
+                        📍 Vị trí của Mẹ
+                    </button>
+                    <button class="btn btn-green btn-sm" id="btnSetPickupHere">
+                        🎯 Đón mẹ ở đây
+                    </button>
+                </div>
+
+                <!-- BẢN ĐỒ -->
+                <div class="map-container" id="momMap"></div>
+
+                <!-- CHÚ THÍCH -->
+                <div class="info-row">
+                    <span><span class="info-dot dot-mom"></span> Mẹ đang ở</span>
+                    <span><span class="info-dot dot-dest"></span> Điểm đến</span>
+                    <span><span class="info-dot dot-driver"></span> Đu Đủ (Nhà)</span>
+                </div>
+
+                <!-- NÚT NHANH -->
+                <div class="quick-locations">
+                    <button class="quick-loc-btn active" data-lat="20.9821" data-lng="105.8015" data-name="🏠 Nhà Phùng Khoang">🏠 Nhà</button>
+                    <button class="quick-loc-btn" data-lat="20.9850" data-lng="105.8050" data-name="🛒 Chợ Thanh Xuân">🛒 Chợ</button>
+                    <button class="quick-loc-btn" data-lat="20.9805" data-lng="105.7978" data-name="🏫 TH Trung Văn">🏫 Trường</button>
+                </div>
+
+                <!-- THÔNG TIN ĐIỂM ĐẾN -->
+                <div class="bubble-card" style="text-align:center;">
+                    <div style="font-weight:700; font-size:15px;" id="destName">🏠 Nhà Phùng Khoang</div>
+                    <div style="font-size:11px; color:var(--text-light);" id="destCoords">20.9821, 105.8015</div>
+                    <div style="font-size:11px; color:var(--pink); margin-top:2px;" id="momLocation">👩 Mẹ: Đang chờ GPS...</div>
+                </div>
+
+                <!-- HẸN GIỜ -->
+                <div style="width:100%; margin-bottom:8px;">
+                    <label style="font-weight:600; font-size:12px; color:var(--text-light);">⏰ Hẹn giờ:</label>
+                    <input type="datetime-local" class="input-bubble" id="pickupTime" />
+                </div>
+
+                <!-- NÚT ĐẶT XE -->
+                <button class="btn btn-orange btn-full" id="btnOrder" style="font-size:17px; padding:14px;">
+                    🛵 ĐẶT TÀI XẾ LÊ THÁI MINH
+                </button>
+            </div>
+
+            <!-- ========== MÀN TÀI XẾ ========== -->
+            <div class="screen" id="driverScreen">
+                <div class="screen-header">
+                    <div style="font-weight:800; font-size:19px; color:var(--orange);">🧑‍✈️ BẢNG ĐIỀU KHIỂN</div>
+                    <div class="subtitle">Tài xế Lê Thái Minh</div>
+                    <button class="btn btn-outline btn-xs" id="btnBackMom" style="margin-top:6px;">👩‍🦰 Về giao diện Mẹ</button>
+                </div>
+                <div class="bubble-card" style="text-align:center; background: linear-gradient(135deg, #fff8e1, #fff3e0); border:2px solid var(--orange);">
+                    <div style="font-size:13px; font-weight:600; color:var(--text-light);">🏆 ĐIỂM HIẾU THẢO</div>
+                    <div style="font-size:40px; font-weight:900; color:var(--orange);" id="pointsDisplay">0.0</div>
+                </div>
+                <div style="width:100%;">
+                    <h4 style="font-weight:700; color:var(--text); margin-bottom:6px;">📋 Cuốc xe:</h4>
+                    <div id="ordersList"><p style="color:var(--text-light); text-align:center; padding:16px;">Đang lắng nghe...</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP MẬT KHẨU -->
+    <div class="password-popup" id="pwPopup">
+        <div class="password-bubble" id="pwBubble">
+            <div style="font-size:44px;">🔐</div>
+            <h3 style="color:var(--text);">Xác minh Tài xế</h3>
+            <p style="font-size:12px; color:var(--text-light);">Nhập mật khẩu để vào</p>
+            <input type="password" class="input-bubble" id="pwInput" placeholder="Mật khẩu..." style="text-align:center; font-size:17px;" />
+            <p class="error-msg" id="pwError">❌ Sai mật khẩu!</p>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+                <button class="btn btn-outline btn-sm" id="btnCancelPw" style="flex:1;">Hủy</button>
+                <button class="btn btn-orange btn-sm" id="btnConfirmPw" style="flex:1;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP CHI TIẾT ĐIỂM -->
+    <div class="popup-overlay" id="pointsPopup">
+        <div class="popup-bubble">
+            <div style="font-size:44px;">📊</div>
+            <h3>Chi tiết điểm</h3>
+            <p id="pointsDetail" style="font-size:13px; line-height:1.8;"></p>
+            <button class="btn btn-primary btn-sm" id="btnClosePoints">✅ OK</button>
+        </div>
+    </div>
+
+    <!-- POPUP ĂN MỪNG -->
+    <div class="popup-overlay" id="celebratePopup">
+        <div class="popup-bubble">
+            <div style="font-size:60px;">🎉</div>
+            <h3>Chúc mừng Đu Đủ!</h3>
+            <p>🎉 Đạt <strong>100 Điểm Hiếu Thảo</strong>!<br><strong>ĐI ĂN THÔI MẸ ƠI! 🍗🍕</strong></p>
+            <button class="btn btn-orange" id="btnCloseCelebrate">🥳 TUYỆT VỜI!</button>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <!-- ==================== CDN ==================== -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- ==================== CODE CHÍNH ==================== -->
+    <script>
+        (function() {
+            console.log("🚀 DUDU Bike khởi động...");
+
+            // ============ SUPABASE ============
+            const SUPABASE_URL = "https://hfrqvmfzzgfwiahkozqy.supabase.co";
+            const SUPABASE_KEY = "sb_publishable_4GEXwOZM8cT8jQZleAJIqg_oCXAh9IO";
+            let supabase = null;
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log("✅ Supabase OK");
+            } catch (e) {
+                console.error("❌ Supabase:", e);
+            }
+
+            // ============ TỌA ĐỘ ============
+            const HOME = { lat: 20.9821, lng: 105.8015, name: "🏠 Nhà Phùng Khoang" };
+            const MARKET = { lat: 20.9850, lng: 105.8050, name: "🛒 Chợ Thanh Xuân" };
+            const SCHOOL = { lat: 20.9805, lng: 105.7978, name: "🏫 TH Trung Văn" };
+            const PASSWORD = "dudubike2026";
+            const POINTS_KEY = "dudu_points";
+            const POINTS_RATE = 0.025;
+
+            // ============ STATE ============
+            let currentRole = null;
+            let momMap = null;
+            let momMarker = null; // Marker vị trí mẹ (hồng)
+            let destMarker = null; // Marker điểm đến (cam)
+            let driverMarker = null; // Marker Đu Đủ (xanh)
+            let momLat = null;
+            let momLng = null;
+            let destLat = HOME.lat;
+            let destLng = HOME.lng;
+            let destName = HOME.name;
+            let allOrders = [];
+            let realtimeChannel = null;
+            let mapReady = false;
+            let watchId = null;
+
+            const $ = (id) => document.getElementById(id);
+
+            // ============ MÀN HÌNH ============
+            function showScreen(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                const target = $(id);
+                if (target) {
+                    target.classList.add('active');
+                    $('appContent').scrollTop = 0;
+                }
+                if (id === 'momScreen' && !mapReady) {
+                    initMap();
+                    mapReady = true;
+                } else if (id === 'momScreen' && momMap) {
+                    setTimeout(() => momMap.invalidateSize(), 400);
+                }
+                if (id === 'driverScreen') {
+                    loadOrders();
+                    updatePointsDisplay();
+                }
+            }
+
+            // ============ BẢN ĐỒ ============
+            function initMap() {
+                const container = $('momMap');
+                if (!container) return;
+
+                momMap = L.map('momMap', {
+                    center: [HOME.lat, HOME.lng],
+                    zoom: 15,
+                    zoomControl: true,
+                });
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                }).addTo(momMap);
+
+                // Marker Đu Đủ (Nhà) - màu xanh cyan
+                driverMarker = L.marker([HOME.lat, HOME.lng], {
+                    icon: L.divIcon({
+                        html: '<div style="font-size:28px;">🛵</div>',
+                        iconSize: [30, 34],
+                        iconAnchor: [15, 34],
+                    }),
+                }).addTo(momMap).bindPopup('<b>🛵 Đu Đủ</b><br>Nhà Phùng Khoang');
+
+                // Marker điểm đến - màu cam
+                destMarker = L.marker([destLat, destLng], {
+                    draggable: true,
+                    icon: L.divIcon({
+                        html: '<div style="font-size:32px; filter:drop-shadow(0 3px 6px rgba(255,140,0,0.5));">🎯</div>',
+                        iconSize: [34, 38],
+                        iconAnchor: [17, 38],
+                    }),
+                }).addTo(momMap).bindPopup('<b>🎯 Điểm đến</b>');
+
+                destMarker.on('dragend', () => {
+                    const pos = destMarker.getLatLng();
+                    destLat = pos.lat;
+                    destLng = pos.lng;
+                    destName = "📍 Vị trí tùy chọn";
+                    updateDestDisplay();
+                    updateQuickActive();
+                });
+
+                // Marker vị trí mẹ - màu hồng (ẩn ban đầu)
+                momMarker = L.marker([HOME.lat, HOME.lng], {
+                    icon: L.divIcon({
+                        html: '<div style="font-size:30px; filter:drop-shadow(0 3px 6px rgba(233,30,99,0.5));">👩‍🦰</div>',
+                        iconSize: [32, 36],
+                        iconAnchor: [16, 36],
+                    }),
+                }).bindPopup('<b>👩‍🦰 Mẹ đang ở đây</b>');
+                // Chưa thêm vào map vội, đợi có GPS
+
+                setTimeout(() => momMap.invalidateSize(), 400);
+
+                // Thử lấy GPS ngay
+                getMomLocation();
+            }
+
+            function updateDestDisplay() {
+                $('destName').textContent = destName;
+                $('destCoords').textContent = destLat.toFixed(5) + ', ' + destLng.toFixed(5);
+            }
+
+            function updateMomDisplay(lat, lng) {
+                $('momLocation').textContent = `👩 Mẹ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            }
+
+            function updateQuickActive() {
+                document.querySelectorAll('.quick-loc-btn').forEach(b => {
+                    const blat = parseFloat(b.dataset.lat);
+                    const blng = parseFloat(b.dataset.lng);
+                    b.classList.toggle('active', Math.abs(destLat - blat) < 0.0003 && Math.abs(destLng -
+                        blng) < 0.0003);
+                });
+            }
+
+            // ============ GPS MẸ ============
+            function getMomLocation() {
+                if (!navigator.geolocation) {
+                    toast("⚠️ Trình duyệt không hỗ trợ GPS", "error");
+                    return;
+                }
+
+                $('btnMyLocation').disabled = true;
+                $('btnMyLocation').textContent = "⏳ Đang lấy GPS...";
+
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        momLat = pos.coords.latitude;
+                        momLng = pos.coords.longitude;
+                        console.log("📍 GPS Mẹ:", momLat, momLng);
+
+                        // Thêm/cập nhật marker mẹ
+                        if (!momMap.hasLayer(momMarker)) {
+                            momMarker.addTo(momMap);
+                        }
+                        momMarker.setLatLng([momLat, momLng]);
+                        momMap.flyTo([momLat, momLng], 16, { duration: 1 });
+                        updateMomDisplay(momLat, momLng);
+                        toast("✅ Đã thấy mẹ! 👩‍🦰");
+
+                        $('btnMyLocation').disabled = false;
+                        $('btnMyLocation').textContent = "📍 Vị trí của Mẹ";
+
+                        // Bắt đầu theo dõi liên tục
+                        if (watchId) navigator.geolocation.clearWatch(watchId);
+                        watchId = navigator.geolocation.watchPosition(
+                            (p) => {
+                                momLat = p.coords.latitude;
+                                momLng = p.coords.longitude;
+                                if (momMap.hasLayer(momMarker)) {
+                                    momMarker.setLatLng([momLat, momLng]);
+                                }
+                                updateMomDisplay(momLat, momLng);
+                            },
+                            (err) => console.warn("Watch error:", err), { enableHighAccuracy: true,
+                                maximumAge: 10000 }
+                        );
+                    },
+                    (err) => {
+                        console.error("GPS error:", err);
+                        toast("❌ Không lấy được GPS. Mẹ cho phép truy cập vị trí nhé!", "error");
+                        $('btnMyLocation').disabled = false;
+                        $('btnMyLocation').textContent = "📍 Vị trí của Mẹ";
+                        $('momLocation').textContent = "👩 Mẹ: Chưa có GPS (cần cấp quyền)";
+                    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            }
+
+            // ============ ĐẶT ĐIỂM ĐÓN = VỊ TRÍ MẸ ============
+            function setPickupToMomLocation() {
+                if (momLat === null || momLng === null) {
+                    toast("⚠️ Chưa có vị trí GPS của mẹ. Bấm 'Vị trí của Mẹ' trước nhé!", "error");
+                    return;
+                }
+                destLat = momLat;
+                destLng = momLng;
+                destName = "👩‍🦰 Vị trí hiện tại của Mẹ";
+                destMarker.setLatLng([destLat, destLng]);
+                momMap.flyTo([destLat, destLng], 16, { duration: 1 });
+                updateDestDisplay();
+                updateQuickActive();
+                toast("🎯 Điểm đón đặt tại vị trí mẹ!");
+            }
+
+            // ============ TÌM KIẾM ĐỊA CHỈ ============
+            async function searchAddress(query) {
+                if (!query || query.length < 3) {
+                    toast("⚠️ Nhập ít nhất 3 ký tự để tìm", "error");
+                    return;
+                }
+                $('searchBtn').disabled = true;
+                $('searchResults').classList.remove('show');
+
+                try {
+                    const resp = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=vi`
+                    );
+                    const data = await resp.json();
+                    renderSearchResults(data);
+                } catch (e) {
+                    console.error("Search error:", e);
+                    toast("❌ Lỗi tìm kiếm", "error");
+                }
+                $('searchBtn').disabled = false;
+            }
+
+            function renderSearchResults(results) {
+                const container = $('searchResults');
+                if (!results.length) {
+                    container.innerHTML =
+                        '<div class="search-item" style="color:#999;">Không tìm thấy địa chỉ</div>';
+                    container.classList.add('show');
+                    return;
+                }
+                container.innerHTML = results.map(r => `
+                    <div class="search-item" onclick="window.selectSearchResult(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"\\'")}')">
+                        <div class="s-name">📍 ${r.display_name.split(',')[0]}</div>
+                        <div class="s-addr">${r.display_name}</div>
+                    </div>
+                `).join('');
+                container.classList.add('show');
+            }
+
+            window.selectSearchResult = function(lat, lng, name) {
+                destLat = parseFloat(lat);
+                destLng = parseFloat(lng);
+                destName = "📍 " + name.split(',')[0];
+                destMarker.setLatLng([destLat, destLng]);
+                momMap.flyTo([destLat, destLng], 17, { duration: 1 });
+                updateDestDisplay();
+                updateQuickActive();
+                $('searchResults').classList.remove('show');
+                $('searchInput').value = '';
+                toast("✅ Đã chọn: " + name.split(',')[0]);
+            };
+
+            // ============ NÚT NHANH ============
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('quick-loc-btn')) {
+                    destLat = parseFloat(e.target.dataset.lat);
+                    destLng = parseFloat(e.target.dataset.lng);
+                    destName = e.target.dataset.name;
+                    destMarker.setLatLng([destLat, destLng]);
+                    momMap.flyTo([destLat, destLng], 16, { duration: 1 });
+                    updateDestDisplay();
+                    updateQuickActive();
+                }
+            });
+
+            // Ẩn search results khi click ra ngoài
+            document.addEventListener('click', function(e) {
+                if (!$('searchResults').contains(e.target) && e.target !== $('searchInput') && e.target !== $(
+                        'searchBtn')) {
+                    $('searchResults').classList.remove('show');
+                }
+            });
+
+            // ============ ĐẶT XE ============
+            async function placeOrder() {
+                if (!supabase) return toast("❌ Chưa kết nối", "error");
+                const timeVal = $('pickupTime').value || 'Ngay bây giờ';
+                const btn = $('btnOrder');
+                btn.disabled = true;
+                btn.textContent = "⏳ Đang gửi...";
+
+                // Gửi kèm vị trí mẹ nếu có
+                const orderData = {
+                    destination: destName,
+                    lat: destLat,
+                    lng: destLng,
+                    pickup_time: timeVal,
+                    status: 'Đang đợi Đu Đủ',
+                };
+                if (momLat !== null) {
+                    orderData.mom_lat = momLat;
+                    orderData.mom_lng = momLng;
+                }
+
+                try {
+                    const { error } = await supabase.from('orders').insert([orderData]);
+                    if (error) throw error;
+                    toast("✅ Đã đặt xe! Đu Đủ sẽ đến đón mẹ! 🛵");
+                } catch (e) {
+                    toast("❌ " + e.message, "error");
+                }
+                btn.disabled = false;
+                btn.textContent = "🛵 ĐẶT TÀI XẾ LÊ THÁI MINH";
+            }
+
+            // ============ REALTIME ============
+            function setupRealtime() {
+                if (!supabase) return;
+                try {
+                    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+                    realtimeChannel = supabase
+                        .channel('orders-chan')
+                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (p) => {
+                            allOrders.unshift(p.new);
+                            if (currentRole === 'driver') { renderOrders();
+                                playTing();
+                                toast("🔔 Cuốc mới!"); }
+                        })
+                        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (p) => {
+                            const idx = allOrders.findIndex(o => o.id === p.new.id);
+                            if (idx >= 0) allOrders[idx] = p.new;
+                            else allOrders.unshift(p.new);
+                            if (currentRole === 'driver') renderOrders();
+                        })
+                        .subscribe();
+                } catch (e) { console.warn("Realtime:", e); }
+            }
+
+            async function loadOrders() {
+                if (!supabase) return;
+                try {
+                    const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
+                        .limit(20);
+                    allOrders = data || [];
+                    renderOrders();
+                } catch (e) { console.error(e); }
+            }
+
+            function renderOrders() {
+                const container = $('ordersList');
+                if (!container) return;
+                const active = allOrders.filter(o => o.status !== 'Hoàn thành');
+                const done = allOrders.filter(o => o.status === 'Hoàn thành');
+                const list = [...active, ...done.slice(0, 5)];
+                if (!list.length) {
+                    container.innerHTML = '<p style="color:var(--text-light); text-align:center;">Chưa có cuốc</p>';
+                    return;
+                }
+                container.innerHTML = list.map(o => {
+                    let badge = 'badge-waiting',
+                        actions = '';
+                    if (o.status === 'Đang đến đón') badge = 'badge-coming';
+                    if (o.status === 'Hoàn thành') badge = 'badge-done';
+                    if (!o.status || o.status === 'Đang đợi Đu Đủ') {
+                        actions =
+                            `<button class="btn btn-orange btn-sm" onclick="window.acceptOrder('${o.id}')">🚀 BẮT ĐẦU ĐÓN</button>`;
+                    } else if (o.status === 'Đang đến đón') {
+                        actions =
+                            `<button class="btn btn-primary btn-sm" onclick="window.confirmArrival('${o.id}',${o.lat},${o.lng},'${(o.destination||'').replace(/'/g,"\\'")}')">✅ ĐÃ ĐẾN + ĐIỂM</button>`;
+                    } else { actions = '<span style="color:#2e7d32;">✅ Xong</span>'; }
+                    return `<div class="order-item">
+                        <div class="order-dest">${o.destination||'?'}</div>
+                        <div class="order-meta">🕐 ${o.pickup_time||'Ngay'} | 📍 ${(o.lat||0).toFixed(4)}, ${(o.lng||0).toFixed(4)}</div>
+                        ${o.mom_lat ? `<div class="order-meta">👩 Mẹ ở: ${o.mom_lat.toFixed(4)}, ${o.mom_lng.toFixed(4)}</div>` : ''}
+                        <span class="badge ${badge}">${o.status||'Đang đợi'}</span>
+                        <div class="order-actions">${actions}</div>
+                    </div>`;
+                }).join('');
+            }
+
+            // ============ TÍNH ĐIỂM ============
+            function haversine(lat1, lng1, lat2, lng2) {
+                const R = 6371000;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math
+                    .sin(dLng / 2) ** 2;
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            }
+
+            function getPoints() { return parseFloat(localStorage.getItem(POINTS_KEY) || '0'); }
+
+            function updatePointsDisplay() {
+                const el = $('pointsDisplay');
+                if (el) el.textContent = getPoints().toFixed(1);
+            }
+
+            async function confirmArrival(orderId, destLat2, destLng2, destination) {
+                if (!supabase) return;
+                const dist = haversine(HOME.lat, HOME.lng, destLat2, destLng2);
+                const earned = Math.round(dist * POINTS_RATE * 10) / 10;
+                const old = getPoints();
+                const total = Math.round((old + earned) * 10) / 10;
+                try { await supabase.from('orders').update({ status: 'Hoàn thành' }).eq('id', orderId); } catch (e) { console
+                        .error(e); }
+                localStorage.setItem(POINTS_KEY, total);
+                loadOrders();
+                updatePointsDisplay();
+                $('pointsDetail').innerHTML = `
+                    📍 ${destination}<br>📏 ${Math.round(dist)}m (${(dist/1000).toFixed(2)}km)<br>
+                    🧮 ${Math.round(dist)}m × 0.025 = <b>+${earned} điểm</b><br>
+                    💾 Cũ: ${old.toFixed(1)}<br>
+                    🏆 <span style="color:#ff8c00;font-size:20px;font-weight:900;">Tổng: ${total.toFixed(1)}</span>`;
+                $('pointsPopup').classList.add('show');
+                if (total >= 100 && old < 100) setTimeout(() => $('celebratePopup').classList.add('show'), 1500);
+                playTing();
+                toast(`✅ +${earned} điểm!`);
+            }
+
+            // ============ TOAST ============
+            function toast(msg, type = '') {
+                const t = document.createElement('div');
+                t.className = 'toast ' + type;
+                t.textContent = msg;
+                $('toastContainer').appendChild(t);
+                setTimeout(() => { t.style.opacity = '0';
+                    setTimeout(() => t.remove(), 400); }, 3000);
+            }
+
+            // ============ ÂM THANH ============
+            function playTing() {
+                try {
+                    const ctx = new(window.AudioContext || window.webkitAudioContext)();
+                    [880, 1100].forEach((f, i) => {
+                        const o = ctx.createOscillator(),
+                            g = ctx.createGain();
+                        o.connect(g);
+                        g.connect(ctx.destination);
+                        o.type = 'sine';
+                        o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.15);
+                        g.gain.setValueAtTime(0.35, ctx.currentTime + i * 0.15);
+                        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25 + i * 0.15);
+                        o.start(ctx.currentTime + i * 0.15);
+                        o.stop(ctx.currentTime + 0.25 + i * 0.15);
+                    });
+                    setTimeout(() => ctx.close().catch(() => {}), 600);
+                } catch (e) {}
+            }
+
+            // ============ GÁN SỰ KIỆN ============
+            $('btnMom').addEventListener('click', () => { currentRole = 'mom';
+                showScreen('momScreen');
+                toast("👩‍🦰 Chào mẹ!"); });
+            $('btnDriver').addEventListener('click', () => { $('pwPopup').classList.add('show');
+                $('pwInput').value = '';
+                $('pwError').style.display = 'none';
+                setTimeout(() => $('pwInput').focus(), 300); });
+            $('secretBtn').addEventListener('click', () => { $('pwPopup').classList.add('show');
+                $('pwInput').value = '';
+                $('pwError').style.display = 'none'; });
+            $('btnConfirmPw').addEventListener('click', () => {
+                if ($('pwInput').value.trim() === PASSWORD) { $('pwPopup').classList.remove('show');
+                    currentRole = 'driver';
+                    showScreen('driverScreen');
+                    loadOrders();
+                    toast("🧑‍✈️ Chào Đu Đủ!"); } else { $('pwError').style.display = 'block';
+                    $('pwInput').value = '';
+                    $('pwInput').focus();
+                    toast("❌ Sai!", "error"); }
+            });
+            $('btnCancelPw').addEventListener('click', () => $('pwPopup').classList.remove('show'));
+            $('pwInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') $('btnConfirmPw').click(); });
+            $('btnBackMom').addEventListener('click', () => { currentRole = 'mom';
+                showScreen('momScreen');
+                toast("👩‍🦰 Về với mẹ"); });
+            $('btnMyLocation').addEventListener('click', getMomLocation);
+            $('btnSetPickupHere').addEventListener('click', setPickupToMomLocation);
+            $('searchBtn').addEventListener('click', () => searchAddress($('searchInput').value.trim()));
+            $('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchAddress($(
+                'searchInput').value.trim()); });
+            $('btnOrder').addEventListener('click', placeOrder);
+            $('btnClosePoints').addEventListener('click', () => $('pointsPopup').classList.remove('show'));
+            $('btnCloseCelebrate').addEventListener('click', () => $('celebratePopup').classList.remove('show'));
+
+            window.acceptOrder = async function(id) {
+                if (!supabase) return;
+                await supabase.from('orders').update({ status: 'Đang đến đón' }).eq('id', id);
+                loadOrders();
+                playTing();
+                toast("🚀 Đang đến!");
+            };
+            window.confirmArrival = confirmArrival;
+
+            // ============ START ============
+            setupRealtime();
+            updatePointsDisplay();
+            console.log("✅ SẴN SÀNG!");
+            console.log("📍 GPS: Bấm 'Vị trí của Mẹ' để lấy GPS");
+            console.log("🔍 Tìm kiếm: Nhập địa chỉ vào ô search");
+            console.log("🔐 MK:", PASSWORD);
+        })();
+    </script>
+</body>
+</html>
