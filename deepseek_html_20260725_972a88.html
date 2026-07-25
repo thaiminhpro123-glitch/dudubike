@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DUDU BIKE</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root{--c:#00b0b9;--o:#ff8c00;--w:#fff;--t:#1a3c3e;--tl:#5a7a7c;--sh:0 8px 30px rgba(0,176,185,0.2);--r:25px;--red:#f44336;--g:#4caf50;--b:#2196F3;--p:#e91e63;--gold:#FFD700}
+        .dark{--w:#1a1a2e;--t:#eee;--tl:#aaa;--sh:0 8px 30px rgba(0,212,221,0.15)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{-webkit-font-smoothing:antialiased}
+        body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(160deg,#e8f8f9,#d4f1f3,#e0f7f9,#fdf2e0);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:10px;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+        .dark body{background:linear-gradient(160deg,#0a0a15,#12122a,#0f0f1a,#1a1a2e)}
+        .phone{width:100%;max-width:440px;height:92vh;max-height:900px;background:var(--w);border-radius:36px;box-shadow:0 20px 60px rgba(0,0,0,.18),0 0 0 8px #1a1a1a,0 0 0 11px #333;overflow:hidden;display:flex;flex-direction:column;position:relative;transition:background .3s}
+        .island{width:100px;height:28px;background:#1a1a1a;border-radius:20px;margin:8px auto 2px;flex-shrink:0}
+        .content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 14px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+        .splash{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#00b0b9,#008a91);z-index:5000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s,visibility .6s}
+        .splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+        .splash .logo{font-size:80px;animation:bounce 1s ease-in-out infinite alternate}
+        .splash .title{font-size:42px;font-weight:900;color:#fff;letter-spacing:2px;margin-top:10px;text-shadow:0 4px 20px rgba(0,0,0,.3)}
+        @keyframes bounce{0%{transform:translateY(0)}100%{transform:translateY(-20px)}}
+        .lag-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1565C0,#0D47A1,#1A237E);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;animation:lagIn .4s ease}
+        .lag-screen.show{display:flex}
+        @keyframes lagIn{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+        .lag-face{font-size:100px;animation:lagShake .6s ease-in-out infinite}
+        @keyframes lagShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-15px) rotate(-5deg)}30%{transform:translateX(15px) rotate(5deg)}45%{transform:translateX(-10px) rotate(-3deg)}60%{transform:translateX(10px) rotate(3deg)}75%{transform:translateX(-5px) rotate(-1deg)}90%{transform:translateX(5px) rotate(1deg)}}
+        .lag-code{font-size:80px;font-weight:900;color:#FFD700;letter-spacing:8px;margin:10px 0;animation:lagPulse 1s infinite}
+        @keyframes lagPulse{0%,100%{opacity:1}50%{opacity:.6}}
+        .lag-text{font-size:14px;color:#90CAF9;letter-spacing:4px;font-weight:700;margin-bottom:20px}
+        .lag-retry{padding:14px 40px;border-radius:50px;background:#FFD700;color:#1a3c3e;font-weight:700;font-size:16px;border:none;cursor:pointer}
+        .screen{display:none;flex-direction:column;align-items:center;min-height:100%;animation:fadeIn .25s ease}
+        .screen.active{display:flex}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:13px 22px;border-radius:50px;font-size:15px;font-weight:700;border:none;cursor:pointer;transition:.15s;font-family:inherit;color:#fff;background:var(--c);box-shadow:var(--sh);outline:none;-webkit-tap-highlight-color:transparent;position:relative;overflow:hidden}
+        .btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:.3s;border-radius:50px}
+        .btn:active::after{background:rgba(255,255,255,.2)}.btn:active{transform:scale(.95)}
+        .btn.o{background:var(--o)}.btn.r{background:var(--red)}.btn.g{background:var(--g)}.btn.b{background:var(--b)}.btn.p{background:var(--p)}
+        .btn.out{background:var(--w);color:var(--c);border:2.5px solid var(--c);box-shadow:none}.btn.s{padding:10px 18px;font-size:13px}.btn.f{width:100%}.btn:disabled{opacity:.5}
+        .inp{width:100%;padding:14px 18px;border-radius:50px;border:2px solid #e0eaea;font-size:14px;font-family:inherit;background:var(--w);color:var(--t);outline:none;margin-bottom:10px;transition:.2s;-webkit-appearance:none}
+        .dark .inp{background:#16213e;border-color:#333;color:#eee}
+        .inp:focus{border-color:var(--c);box-shadow:0 0 0 4px rgba(0,176,185,.08)}
+        .card{background:var(--w);border-radius:var(--r);padding:16px;box-shadow:var(--sh);width:100%;margin-bottom:12px}
+        .map-thumb{width:100%;height:200px;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);border:3px solid #fff;margin-bottom:12px;background:#e8f8f9}
+        .qlocs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;width:100%}
+        .qloc{flex:1;min-width:80px;padding:12px 8px;border-radius:50px;background:#e0f7f9;border:2px solid transparent;font-size:12px;font-weight:600;cursor:pointer;color:#008a91;text-align:center;transition:.2s;font-family:inherit}
+        .dark .qloc{background:#1a3a5c;color:#8ecae6}
+        .qloc.active{background:var(--c);color:#fff}
+        .ocard{background:var(--w);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:10px;border-left:5px solid var(--o)}
+        .ocard .dn{font-weight:700;font-size:16px;color:var(--t)}.ocard .mt{font-size:12px;color:var(--tl);margin:4px 0}.ocard .pr{font-weight:600;color:var(--o);font-size:14px}.ocard .ac{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+        .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0);z-index:1000;display:none;align-items:center;justify-content:center;transition:.3s}
+        .modal.show{display:flex;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+        .mbox{background:var(--w);border-radius:30px;padding:24px 20px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3);max-width:400px;width:95%;max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch;transform:scale(.9);transition:.3s}
+        .modal.show .mbox{transform:scale(1)}
+        .dark .mbox{background:#16213e;color:#eee}
+        .chat-container{display:flex;flex-direction:column;height:60vh}
+        .chat-msgs{flex:1;overflow-y:auto;padding:12px;background:#f5f5f5;border-radius:18px;margin-bottom:12px;min-height:200px;text-align:left;-webkit-overflow-scrolling:touch}
+        .dark .chat-msgs{background:#0f0f1a}
+        .chat-input-row{display:flex;gap:8px}
+        .chat-bub{display:inline-block;max-width:80%;padding:10px 14px;border-radius:18px;font-size:14px;margin:4px 0;word-break:break-word}
+        .chat-bub.mom{background:#e8e8e8;color:#1a3c3e}.dark .chat-bub.mom{background:#333;color:#eee}
+        .chat-bub.drv{background:var(--c);color:#fff}
+        .sumcard{background:linear-gradient(135deg,#1565C0,#1E88E5,#42A5F5);border-radius:30px;padding:24px 20px;color:#fff;text-align:center;animation:popIn .4s ease}
+        @keyframes popIn{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
+        .sumcard .am{font-size:48px;font-weight:900}.sumcard .pt{font-size:28px;font-weight:700;color:#FFD700}
+        .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1a3c3e;color:#fff;padding:10px 20px;border-radius:50px;font-weight:600;font-size:13px;z-index:3000;pointer-events:none;animation:td .35s ease}
+        @keyframes td{from{top:-60px;opacity:0}to{top:20px;opacity:1}}
+        .toast.e{background:#e53935}.toast.s{background:#2e7d32}
+        .food-item{padding:12px 16px;border-bottom:1px solid #eee;cursor:pointer;text-align:left;transition:.15s;border-radius:18px;margin-bottom:4px}
+        .dark .food-item{border-bottom-color:#333}.food-item:active{background:#e0f7f9}.dark .food-item:active{background:#1a3a5c}
+        .stars{display:flex;justify-content:center;gap:8px;font-size:36px;cursor:pointer;margin:16px 0}
+        .stars .star{color:#ccc;transition:.15s}.stars .star.active,.stars .star:active{color:#FFD700;transform:scale(1.2)}
+        .ubar{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:12px;padding:8px 0}
+        .ubar .un{font-weight:600;font-size:14px;color:var(--t)}
+        .badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:2px}
+        .badge-gold{background:#FFD700;color:#1a3c3e}.badge-silver{background:#C0C0C0;color:#1a3c3e}.badge-bronze{background:#CD7F32;color:#fff}
+        .progress-bar{width:100%;height:8px;background:#e0e0e0;border-radius:10px;overflow:hidden;margin:4px 0}
+        .dark .progress-bar{background:#333}
+        .progress-fill{height:100%;background:var(--o);border-radius:10px;transition:.5s}
+        .tab-header{display:flex;background:#e0f7f9;border-radius:50px;padding:4px;margin-bottom:12px;position:relative}
+        .dark .tab-header{background:#1a3a5c}
+        .tab-btn{flex:1;padding:12px;border-radius:50px;font-weight:600;font-size:14px;cursor:pointer;text-align:center;transition:.3s;color:#008a91;background:transparent;border:none;z-index:1}
+        .dark .tab-btn{color:#8ecae6}
+        .tab-btn.active{background:var(--c);color:#fff}
+        .swipe-container{display:flex;overflow-x:hidden;width:100%;transition:transform .3s ease;will-change:transform}
+        .swipe-panel{min-width:100%;flex-shrink:0}
+    </style>
+</head>
+<body>
+<div class="phone" id="phoneFrame">
+    <div class="splash" id="splash"><div class="logo">🛵</div><div class="title">DUDU BIKE</div></div>
+    <div class="lag-screen" id="lagScreen"><div class="lag-face">😫</div><div class="lag-code">001</div><div class="lag-text">LAGGGGGGGGGGGGGGGGGGGGGG</div><button class="lag-retry" id="btnRetryLag">🔄 THỬ LẠI</button></div>
+    <div class="island"></div>
+    <div class="content" id="app">
+        <div class="screen active" id="loginScreen"><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%"><div style="font-size:48px">🛵</div><div style="font-size:24px;font-weight:800;color:var(--c);margin-bottom:24px">DUDU BIKE</div><input type="tel" class="inp" id="loginPhone" placeholder="Số điện thoại"><input type="password" class="inp" id="loginPassword" placeholder="Mật khẩu"><button class="btn f" id="btnLogin">🔐 ĐĂNG NHẬP</button></div></div>
+        <div class="screen" id="roleScreen"><div class="ubar"><span class="un" id="displayUserName">👤</span><div style="display:flex;gap:4px"><button class="btn out s" id="btnDarkMode">🌓</button><button class="btn r s" id="btnLogout">🚪</button></div></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%"><div style="font-size:48px">🛵💨</div><div style="font-size:26px;font-weight:800;color:var(--c)">DUDU BIKE</div><button class="btn f" id="btnRoleMom" style="max-width:300px;margin:10px 0">👩‍🦰 Mẹ đặt xe</button><button class="btn o f" id="btnRoleDriver" style="max-width:300px">🧑‍✈️ Tài xế Đu Đủ</button></div></div>
+
+        <!-- MOM SCREEN -->
+        <div class="screen" id="momScreen"><div class="ubar"><span class="un">👩‍🦰 Mẹ</span><div style="display:flex;gap:4px"><button class="btn out s" id="btnDarkModeMom">🌓</button><button class="btn out s" id="btnChatMom">💬</button><button class="btn r s" id="btnLogoutMom">🚪</button></div></div>
+        <div class="tab-header" id="tabHeader"><button class="tab-btn active" data-tab="ride">🛵 Đặt xe</button><button class="tab-btn" data-tab="delivery">📦 Giao hàng</button></div>
+        <div class="swipe-container" id="swipeContainer">
+            <div class="swipe-panel" id="panelRide">
+                <div style="display:flex;gap:8px;margin-bottom:8px;width:100%"><input type="text" class="inp" id="searchInput" placeholder="🔍 Tìm địa điểm..." style="margin-bottom:0"><button class="btn s" id="btnSearch">Tìm</button></div>
+                <div id="searchResults" style="width:100%;background:var(--w);border-radius:18px;box-shadow:var(--sh);margin-bottom:8px;display:none;max-height:200px;overflow-y:auto"></div>
+                <button class="btn p f s" id="btnAIFood" style="margin-bottom:8px">🤖 AI tìm món quanh Thanh Xuân</button>
+                <div id="momMapThumb" class="map-thumb"></div>
+                <button class="btn out f s" id="btnMomGps" style="margin-bottom:8px">📍 Vị trí của Mẹ</button>
+                <div class="qlocs"><button class="qloc active" data-dest="🏠 58 Phùng Khoang" data-lat="20.9822" data-lng="105.8016">🏠 Nhà</button><button class="qloc" data-dest="🛒 Chợ Thanh Xuân" data-lat="20.9850" data-lng="105.8050">🛒 Chợ</button><button class="qloc" data-dest="🏫 Đại học Hà Nội" data-lat="20.9805" data-lng="105.7978">🏫 Trường</button></div>
+                <div class="card" style="text-align:center"><div style="font-weight:700" id="destDisplay">🏠 58 Phùng Khoang</div><div style="font-size:12px;color:var(--tl)" id="priceEstimate">🏆 Đang tính...</div></div>
+                <input type="datetime-local" class="inp" id="pickupTime"><button class="btn o f" id="btnPlaceOrder" style="font-size:18px">🛵 ĐẶT TÀI XẾ</button>
+                <div id="orderStatusArea" style="width:100%;margin-top:12px;text-align:center;font-weight:600"></div>
+            </div>
+            <div class="swipe-panel" id="panelDelivery">
+                <div style="display:flex;gap:8px;margin-bottom:8px;width:100%"><input type="text" class="inp" id="deliverySearchInput" placeholder="🔍 Tìm điểm giao..." style="margin-bottom:0"><button class="btn s" id="btnDeliverySearch">Tìm</button></div>
+                <div id="deliverySearchResults" style="width:100%;background:var(--w);border-radius:18px;box-shadow:var(--sh);margin-bottom:8px;display:none;max-height:200px;overflow-y:auto"></div>
+                <div id="deliveryMapThumb" class="map-thumb"></div>
+                <button class="btn out f s" id="btnDeliveryGps" style="margin-bottom:8px">📍 Vị trí của Mẹ</button>
+                <div class="card" style="text-align:center"><div style="font-weight:700" id="deliveryDestDisplay">🏠 58 Phùng Khoang</div><div style="font-size:12px;color:var(--tl)" id="deliveryPriceEstimate">🏆 Đang tính...</div></div>
+                <input type="text" class="inp" id="deliveryItemDesc" placeholder="📦 Mô tả hàng..."><button class="btn o f" id="btnPlaceDelivery" style="font-size:18px">📦 ĐẶT GIAO HÀNG</button>
+                <div id="deliveryStatusArea" style="width:100%;margin-top:12px;text-align:center;font-weight:600"></div>
+            </div>
+        </div></div>
+
+        <!-- DRIVER SCREEN -->
+        <div class="screen" id="driverScreen"><div class="ubar"><span class="un">👨‍✈️ Tài xế: Lê Thái Minh</span><div style="display:flex;gap:4px"><button class="btn out s" id="btnDarkModeDriver">🌓</button><button class="btn out s" id="btnChatDriver">💬</button><button class="btn r s" id="btnLogoutDriver">🚪</button></div></div><div style="display:flex;justify-content:flex-end;gap:6px;width:100%;margin-bottom:8px;flex-wrap:wrap"><button class="btn out s" id="btnWeather">🌤️</button><button class="btn out s" id="btnStats">📊</button><button class="btn out s" id="btnBadges">🏅</button><button class="btn out s" id="btnInbox">📬</button><button class="btn r s" id="btnEat">🍽️</button><button class="btn o s" id="btnHotOrder">🔥</button></div><div id="weatherAlert" style="width:100%;margin-bottom:8px"></div><div class="card" style="text-align:center;background:linear-gradient(135deg,#fff8e1,#fff3e0);border:2px solid var(--o)"><div id="badgesContainer" style="margin-bottom:4px"></div>🏆 ĐIỂM HIẾU THẢO: <span style="font-size:28px;font-weight:900;color:var(--o)" id="loyaltyPoints">217.7</span><div class="progress-bar"><div class="progress-fill" id="levelProgress" style="width:17%"></div></div><div style="font-size:11px;color:var(--tl)">Cấp: <b id="levelText">1</b> | Còn <b id="pointsToNext">283</b> điểm</div><div style="margin-top:8px;background:#e8f5e9;border-radius:18px;padding:8px"><div style="font-size:12px;color:var(--tl)">🎯 Mục tiêu tháng: <b id="monthlyTarget">100</b> điểm</div><div class="progress-bar" style="margin:4px 0"><div class="progress-fill" id="monthlyProgress" style="width:0%;background:var(--g)"></div></div><div style="font-size:11px;color:var(--tl)">Đã đạt: <b id="monthlyPoints">0</b>/<span id="monthlyTarget2">100</span> | Còn: <b id="monthlyRemain">100</b> điểm</div></div></div><h4>📋 Cuốc xe:</h4><div id="driverOrdersList" style="width:100%"></div></div>
+    </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="chatModal"><div class="mbox"><div class="chat-container"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="margin:0">💬 <span id="chatPartner">...</span></h3><button class="btn r s close" data-modal="chatModal">✕</button></div><div class="chat-msgs" id="chatMessages"><p style="text-align:center;color:var(--tl);padding:20px">⏳ Đang tải...</p></div><div class="chat-input-row"><input type="text" class="inp" id="chatInput" placeholder="Nhập tin nhắn..." style="margin-bottom:0;flex:1"><button class="btn s" id="btnSendChat">📨</button></div><button class="btn out s f close" data-modal="chatModal" style="margin-top:8px">Đóng Chat</button></div></div></div>
+<div class="modal" id="aiFoodModal"><div class="mbox"><h3>🤖 AI Tìm Món</h3><input type="text" class="inp" id="foodDescription" placeholder="VD: phở bò, bún chả..."><button class="btn p f" id="btnSearchAI">🔍 TÌM</button><div id="aiResults" style="margin-top:12px;text-align:left;max-height:250px;overflow-y:auto"></div><button class="btn out s f close" data-modal="aiFoodModal" style="margin-top:10px">Đóng</button></div></div>
+<div class="modal" id="summaryModal"><div style="max-width:380px;width:90%"><div class="sumcard"><div style="font-size:18px">🏁 HOÀN THÀNH!</div><div style="width:60px;height:3px;background:rgba(255,255,255,.5);margin:12px auto"></div><div>Khoảng cách:</div><div class="am" id="summaryDist">0km</div><div style="width:60px;height:3px;background:rgba(255,255,255,.5);margin:12px auto"></div><div>Điểm cộng (1đ=600m):</div><div class="pt" id="summaryPoints">+0</div><button class="btn o s" style="margin-top:16px;width:100%" id="btnCloseSummary">✅ TUYỆT VỜI!</button></div></div></div>
+<div class="modal" id="inboxModal"><div class="mbox"><h3>📬 Hộp thư</h3><div id="inboxContent"></div><button class="btn out s f close" data-modal="inboxModal" style="margin-top:10px">Đóng</button></div></div>
+<div class="modal" id="eatModal"><div class="mbox"><h3>🍽️ Ăn trừ điểm</h3><input type="number" class="inp" id="eatAmount" placeholder="Số tiền (VNĐ)" style="text-align:center;font-size:18px"><div style="display:flex;gap:10px;margin-top:14px"><button class="btn out s close" data-modal="eatModal" style="flex:1">Hủy</button><button class="btn r s" id="btnConfirmEat" style="flex:1">Trừ</button></div></div></div>
+<div class="modal" id="hotOrderModal"><div class="mbox"><h3>🔥 Đặt nóng</h3><div style="display:flex;gap:8px;margin-bottom:8px"><input type="text" class="inp" id="hotOrderDest" placeholder="Địa điểm..." style="margin-bottom:0"><button class="btn b s" id="btnSearchHotDest">🔍</button></div><div id="hotSearchResults" style="width:100%;background:var(--w);border-radius:18px;box-shadow:var(--sh);margin-bottom:8px;display:none;max-height:150px;overflow-y:auto"></div><div style="display:flex;gap:8px;margin-bottom:8px"><input type="number" class="inp" id="hotOrderLat" placeholder="Lat" step="0.0001" style="margin-bottom:0"><input type="number" class="inp" id="hotOrderLng" placeholder="Lng" step="0.0001" style="margin-bottom:0"></div><button class="btn out f s" id="btnUseCurrentLocation" style="margin-bottom:8px">📍 Vị trí hiện tại</button><div style="display:flex;gap:10px"><button class="btn out s close" data-modal="hotOrderModal" style="flex:1">Hủy</button><button class="btn o s" id="btnConfirmHotOrder" style="flex:1">🔥 ĐẶT</button></div></div></div>
+<div class="modal" id="ratingModal"><div class="mbox"><h3>⭐ Mẹ đánh giá</h3><p style="font-size:12px">1⭐=-50 | 2⭐=-30 | 5⭐=+25.7</p><div class="stars" id="starContainer"><span class="star" data-value="1">☆</span><span class="star" data-value="2">☆</span><span class="star" data-value="3">☆</span><span class="star" data-value="4">☆</span><span class="star" data-value="5">☆</span></div><textarea class="inp" id="ratingComment" placeholder="Lời nhắn..." rows="2"></textarea><button class="btn o f" id="btnSubmitRating">📨 GỬI</button><button class="btn out s f close" data-modal="ratingModal" style="margin-top:6px">Để sau</button></div></div>
+<div class="modal" id="statsModal"><div class="mbox"><h3>📊 Thống kê</h3><div id="statsContent"></div><button class="btn out s f close" data-modal="statsModal" style="margin-top:10px">Đóng</button></div></div>
+<div class="modal" id="badgesModal"><div class="mbox"><h3>🏅 Danh hiệu</h3><div id="badgesContent"></div><button class="btn out s f close" data-modal="badgesModal" style="margin-top:10px">Đóng</button></div></div>
+<div class="modal" id="weatherModal"><div class="mbox"><h3>🌤️ Thời tiết HN</h3><div id="weatherContent">Đang tải...</div><button class="btn out s f close" data-modal="weatherModal" style="margin-top:10px">Đóng</button></div></div>
+<div class="modal" id="mapModal"><div class="mbox" style="max-width:400px;height:70vh;display:flex;flex-direction:column"><h3>🗺️ Bản đồ</h3><div id="leafletMap" style="flex:1;border-radius:20px;overflow:hidden;margin-bottom:12px;min-height:200px;background:#e8f8f9"></div><div style="display:flex;gap:8px"><button class="btn b s" id="btnAppleMaps" style="flex:1">🧭 Apple Maps</button><button class="btn out s" id="btnGoogleMaps" style="flex:1">🧭 Google Maps</button><button class="btn r s close" data-modal="mapModal" style="flex:1">Đóng</button></div></div></div>
+<div id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+    const $=id=>document.getElementById(id);
+    const SUPABASE_URL="https://hfrqvmfzzgfwiahkozqy.supabase.co";
+    const SUPABASE_KEY="sb_publishable_4GEXwOZM8cT8jQZleAJIqg_oCXAh9IO";
+    let sb;try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}catch(e){}
+
+    const DB=()=>{try{return JSON.parse(localStorage.getItem('dudu_db')||'{}')}catch(e){return{}}};
+    const save=db=>{try{localStorage.setItem('dudu_db',JSON.stringify(db))}catch(e){}};
+    let db=DB();if(!db.points)db.points=217.7;if(!db.orders)db.orders=[];if(db.dark===undefined)db.dark=false;
+    if(!db.monthlyPoints)db.monthlyPoints=0;if(!db.monthlyTarget)db.monthlyTarget=100;if(!db.currentMonth)db.currentMonth=new Date().getMonth();
+    save(db);if(db.dark)document.getElementById('phoneFrame').classList.add('dark');
+
+    const HOME={lat:20.9822,lng:105.8016},TX={lat:20.9850,lng:105.8050},MPP=600;
+    const ACC={'0914093267':{pw:'dudubike2026',n:'Lê Thái Minh',r:'driver'},'0943130489':{pw:'meyeududu',n:'Mẹ yêu',r:'mom'}};
+    const PR={1:-50,2:-30,3:0,4:0,5:25.7};
+    const BADGES=[{n:'Tài Xế Vàng',i:'🥇',c:'badge-gold',f:p=>p>=500},{n:'Tài Xế Bạc',i:'🥈',c:'badge-silver',f:p=>p>=300},{n:'100 Cuốc',i:'💯',c:'badge-bronze',f:(p,o)=>o>=100},{n:'50 Cuốc',i:'🔥',c:'badge-silver',f:(p,o)=>o>=50}];
+
+    let user=null,role=null,starVal=0,ratingOid=null,chatChannel=null;
+    let dN="🏠 58 Phùng Khoang",dLa=20.9822,dLo=105.8016;
+    let momMap=null,momM=null,momG=null,mapI=null;
+    let deliveryMap=null,deliveryMarker=null,deliveryGps=null;
+    let delDN="🏠 58 Phùng Khoang",delDLa=20.9822,delDLo=105.8016;
+    let currentTab='ride';
+    let clickC=0,lastC=0;
+
+    function toast(m,t){const el=document.createElement('div');el.className='toast '+(t||'');el.textContent=m;$('toastContainer').appendChild(el);setTimeout(()=>el.remove(),2500);}
+    function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');if(id==='momScreen'){initMap();upPrice();upQ();checkRating();checkNewMonth();}if(id==='driverScreen'){renderO();upBadges();upLevel();checkW();updateMonthlyDisplay();}}
+    function haversine(lat1,lng1,lat2,lng2){const R=6371,dL=(lat2-lat1)*Math.PI/180,dG=(lng2-lng1)*Math.PI/180;const a=Math.sin(dL/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+    function kmToPoints(km){return Math.round((km*1000)/MPP*10)/10;}
+    function fromCoords(o){if(o&&o.ml&&o.mg)return{lat:o.ml,lng:o.mg};if(momG){const g=momG.getLatLng();return{lat:g.lat,lng:g.lng};}return HOME;}
+    function upPrice(){const f=fromCoords();const km=haversine(f.lat,f.lng,dLa,dLo);$('priceEstimate').textContent=`🏆 ~${km.toFixed(1)}km - +${kmToPoints(km)} điểm (1đ=600m)`;}
+    function upQ(){document.querySelectorAll('.qloc').forEach(b=>{b.classList.toggle('active',Math.abs(dLa-+b.dataset.lat)<0.001&&Math.abs(dLo-+b.dataset.lng)<0.001);});}
+    function moveM(lat,lng,name){dLa=lat;dLo=lng;dN=name;if(momMap){momMap.setView([lat,lng],15);momM.setLatLng([lat,lng]);}$('destDisplay').textContent=dN;upPrice();upQ();}
+    function initMap(){if(momMap)return;try{momMap=L.map('momMapThumb',{center:[dLa,dLo],zoom:15,zoomControl:false,attributionControl:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(momMap);momM=L.marker([dLa,dLo],{draggable:true}).addTo(momMap);momM.on('dragend',()=>{const p=momM.getLatLng();dLa=p.lat;dLo=p.lng;dN="📍 Tự chọn";$('destDisplay').textContent=dN;upPrice();upQ();});}catch(e){}}
+    function checkRating(){const pending=db.orders.filter(o=>o.s==='completed'&&!o.r);if(pending.length>0){const l=pending[0];ratingOid=l.id;starVal=0;document.querySelectorAll('#starContainer .star').forEach(s=>{s.classList.remove('active');s.textContent='☆';});$('ratingComment').value='';setTimeout(()=>{$('ratingModal').classList.add('show');},500);}}
+    function toggleDark(){db.dark=!db.dark;save(db);document.getElementById('phoneFrame').classList.toggle('dark',db.dark);}
+    function checkNewMonth(){const now=new Date().getMonth();if(now!==db.currentMonth){if(db.monthlyPoints>=db.monthlyTarget){db.points=Math.round((db.points+25.7)*10)/10;toast("🎉 Đạt mục tiêu tháng! +25.7 điểm thưởng!","s");}db.monthlyPoints=0;db.currentMonth=now;save(db);}}
+    function updateMonthlyDisplay(){checkNewMonth();const mp=db.monthlyPoints||0,mt=db.monthlyTarget||100,prog=Math.min((mp/mt)*100,100),rem=Math.max(mt-mp,0);const el={p:$('monthlyPoints'),t:$('monthlyTarget'),t2:$('monthlyTarget2'),pr:$('monthlyProgress'),r:$('monthlyRemain')};if(el.p)el.p.textContent=mp.toFixed(1);if(el.t)el.t.textContent=mt;if(el.t2)el.t2.textContent=mt;if(el.pr)el.pr.style.width=prog+'%';if(el.r)el.r.textContent=rem.toFixed(1);}
+    $('btnDarkMode')?.addEventListener('click',toggleDark);$('btnDarkModeMom')?.addEventListener('click',toggleDark);$('btnDarkModeDriver')?.addEventListener('click',toggleDark);
+    document.addEventListener('click',()=>{const n=Date.now();if(n-lastC<200){clickC++;if(clickC>8){$('lagScreen').classList.add('show');clickC=0;}}else{clickC=1;}lastC=n;});
+    $('btnRetryLag').addEventListener('click',()=>$('lagScreen').classList.remove('show'));
+    function logout(){user=null;role=null;show('loginScreen');}
+    $('btnLogin').addEventListener('click',()=>{const ph=$('loginPhone').value.trim(),pw=$('loginPassword').value.trim();const a=ACC[ph];if(!a||a.pw!==pw)return toast("Sai SĐT hoặc MK!","e");user={phone:ph,name:a.n,role:a.r};role=a.r;document.querySelectorAll('.un').forEach(e=>e.textContent='👤 '+a.n);show(a.r==='driver'?'driverScreen':'momScreen');});
+    $('btnLogout').addEventListener('click',logout);$('btnLogoutMom').addEventListener('click',logout);$('btnLogoutDriver').addEventListener('click',logout);
+    $('btnRoleMom').addEventListener('click',()=>{role='mom';show('momScreen');});$('btnRoleDriver').addEventListener('click',()=>{role='driver';show('driverScreen');});
+    $('btnMomGps').addEventListener('click',()=>{if(!navigator.geolocation)return toast("GPS ko khả dụng","e");navigator.geolocation.getCurrentPosition(p=>{if(momMap){if(momG)momMap.removeLayer(momG);momG=L.marker([p.coords.latitude,p.coords.longitude],{icon:L.divIcon({html:'👩‍🦰',iconSize:[24,24]})}).addTo(momMap);momMap.setView([p.coords.latitude,p.coords.longitude],15);}upPrice();toast("✅ Đã thấy mẹ!","s");},()=>toast("❌ Lỗi GPS","e"),{enableHighAccuracy:true,timeout:10000});});
+    $('btnSearch').addEventListener('click',async()=>{const q=$('searchInput').value.trim();if(!q)return;try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&accept-language=vi`);const d=await r.json();const c=$('searchResults');c.innerHTML=d.length?d.map(i=>`<div class="food-item" onclick="window.sel(${i.lat},${i.lon},'${i.display_name.replace(/'/g,"\\'")}')">📍 ${i.display_name.split(',')[0]}</div>`).join(''):'<p>Không tìm thấy</p>';c.style.display='block';}catch(e){}});
+    window.sel=(lat,lng,name)=>{moveM(+lat,+lng,"📍 "+name.split(',')[0]);$('searchResults').style.display='none';$('searchInput').value='';};
+    $('btnPlaceOrder').addEventListener('click',()=>{const o={id:Date.now().toString(),type:'ride',dest:dN,lat:dLa,lng:dLo,pt:$('pickupTime').value||'Ngay',s:'waiting',did:'dudu_minh',ts:new Date().toISOString()};if(momG){const g=momG.getLatLng();o.ml=g.lat;o.mg=g.lng;}db.orders.unshift(o);save(db);toast("✅ Đặt xe thành công!","s");});
+    document.querySelectorAll('.qloc').forEach(b=>b.addEventListener('click',function(){moveM(+this.dataset.lat,+this.dataset.lng,this.dataset.dest);}));
+    $('btnAIFood').addEventListener('click',()=>{$('aiFoodModal').classList.add('show');$('foodDescription').value='';$('aiResults').innerHTML='';$('foodDescription').focus();});
+    $('btnSearchAI').addEventListener('click',async()=>{const desc=$('foodDescription').value.trim();if(!desc)return;$('aiResults').innerHTML='<p>⏳ Đang tìm...</p>';try{const bb=`${TX.lat-0.02},${TX.lng-0.02},${TX.lat+0.02},${TX.lng+0.02}`;const url=`https://overpass-api.de/api/interpreter?data=[out:json];node["amenity"~"restaurant|cafe|fast_food"](${bb});out;`;const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),8000);const r=await fetch(url,{signal:ctrl.signal});const d=await r.json();let res=(d.elements||[]).map(e=>({n:e.tags.name||"Quán ko tên",lat:e.lat,lon:e.lon}));const kw=desc.toLowerCase().split(/[\s,]+/).filter(k=>k.length>1);if(kw.length)res=res.filter(q=>kw.some(k=>(q.n||'').toLowerCase().includes(k)));if(!res.length)res=(d.elements||[]).slice(0,10).map(e=>({n:e.tags.name||"Quán ko tên",lat:e.lat,lon:e.lon}));$('aiResults').innerHTML=res.slice(0,12).map((q,i)=>`<div class="food-item" onclick="window.cf(${q.lat},${q.lon},'🍜 ${q.n.replace(/'/g,"\\'")}')"><b>🍜 ${q.n}</b><br><small>📍 ${q.lat.toFixed(4)},${q.lon.toFixed(4)}</small></div>`).join('');}catch(e){$('aiResults').innerHTML='<p style="color:red">❌ Lỗi</p>';}});
+    window.cf=(lat,lng,name)=>{moveM(lat,lng,name);$('aiFoodModal').classList.remove('show');};
+
+    // GIAO HÀNG & VUỐT
+    document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',function(){switchTab(this.dataset.tab);}));
+    let touchStartX=0;const swipeContainer=$('swipeContainer');if(swipeContainer){swipeContainer.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;});swipeContainer.addEventListener('touchend',e=>{const diff=e.changedTouches[0].clientX-touchStartX;if(Math.abs(diff)>50){if(diff>0&&currentTab==='delivery')switchTab('ride');else if(diff<0&&currentTab==='ride')switchTab('delivery');}});}
+    function switchTab(tab){currentTab=tab;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');$('swipeContainer').style.transform=tab==='ride'?'translateX(0)':'translateX(-100%)';if(tab==='ride'){if(!momMap){initMap();upPrice();upQ();}}else{if(!deliveryMap)initDeliveryMap();updateDeliveryPrice();}}
+    function initDeliveryMap(){if(deliveryMap)return;deliveryMap=L.map('deliveryMapThumb',{center:[delDLa,delDLo],zoom:15,zoomControl:false,attributionControl:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(deliveryMap);deliveryMarker=L.marker([delDLa,delDLo],{draggable:true}).addTo(deliveryMap);deliveryMarker.on('dragend',()=>{const p=deliveryMarker.getLatLng();delDLa=p.lat;delDLo=p.lng;delDN="📍 Tự chọn";$('deliveryDestDisplay').textContent=delDN;updateDeliveryPrice();});$('deliveryDestDisplay').textContent=delDN;}
+    function updateDeliveryPrice(){let fLa=HOME.lat,fLo=HOME.lng;if(deliveryGps){const g=deliveryGps.getLatLng();fLa=g.lat;fLo=g.lng;}const km=haversine(fLa,fLo,delDLa,delDLo);$('deliveryPriceEstimate').textContent=`🏆 ~${km.toFixed(1)}km - +${kmToPoints(km)} điểm (1đ=600m)`;}
+    function moveDeliveryMarker(lat,lng,name){delDLa=lat;delDLo=lng;delDN=name;if(deliveryMap){deliveryMap.setView([lat,lng],15);deliveryMarker.setLatLng([lat,lng]);}$('deliveryDestDisplay').textContent=delDN;updateDeliveryPrice();}
+    $('btnDeliveryGps')?.addEventListener('click',()=>{if(!navigator.geolocation)return toast("GPS ko khả dụng","e");navigator.geolocation.getCurrentPosition(p=>{if(deliveryMap){if(deliveryGps)deliveryMap.removeLayer(deliveryGps);deliveryGps=L.marker([p.coords.latitude,p.coords.longitude],{icon:L.divIcon({html:'👩‍🦰',iconSize:[24,24]})}).addTo(deliveryMap);deliveryMap.setView([p.coords.latitude,p.coords.longitude],15);}updateDeliveryPrice();toast("✅ Đã thấy mẹ!","s");},()=>toast("❌ Lỗi GPS","e"),{enableHighAccuracy:true,timeout:10000});});
+    $('btnDeliverySearch')?.addEventListener('click',async()=>{const q=$('deliverySearchInput').value.trim();if(!q)return;try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&accept-language=vi`);const d=await r.json();const c=$('deliverySearchResults');c.innerHTML=d.length?d.map(i=>`<div class="food-item" onclick="window.selDelivery(${i.lat},${i.lon},'${i.display_name.replace(/'/g,"\\'")}')">📍 ${i.display_name.split(',')[0]}</div>`).join(''):'<p>Không tìm thấy</p>';c.style.display='block';}catch(e){}});
+    window.selDelivery=(lat,lng,name)=>{moveDeliveryMarker(+lat,+lng,"📍 "+name.split(',')[0]);$('deliverySearchResults').style.display='none';$('deliverySearchInput').value='';};
+    $('btnPlaceDelivery')?.addEventListener('click',()=>{const item=$('deliveryItemDesc').value.trim()||'Hàng không mô tả';const o={id:Date.now().toString(),type:'delivery',dest:delDN,itemDesc:item,lat:delDLa,lng:delDLo,pt:'Ngay',s:'waiting',did:'dudu_minh',ts:new Date().toISOString()};if(deliveryGps){const g=deliveryGps.getLatLng();o.ml=g.lat;o.mg=g.lng;}db.orders.unshift(o);save(db);toast("✅ Đã đặt giao hàng!","s");});
+
+    // DRIVER
+    function renderO(){const list=db.orders.filter(o=>o.s==='waiting'||!o.s||o.s==='arrived');const c=$('driverOrdersList');if(!list.length){c.innerHTML='<p style="text-align:center">Chưa có cuốc</p>';return;}c.innerHTML=list.map(o=>{const f=fromCoords(o);const km=haversine(f.lat,f.lng,o.lat,o.lng);const pts=kmToPoints(km);const typeLabel=o.type==='delivery'?'📦 Giao':'🛵 Đón';return`<div class="ocard"><div class="dn">${typeLabel}: ${o.dest||'?'}${o.itemDesc?' - '+o.itemDesc:''}</div><div class="mt">🕐 ${o.pt||'Ngay'} | 📏 ${km.toFixed(1)}km | 🏆 +${pts}đ</div><div class="ac"><button class="btn b s" onclick="openMap(${o.lat},${o.lng},'${(o.dest||'').replace(/'/g,"\\'")}',${o.ml||0},${o.mg||0})">🗺️</button>${o.ml?`<button class="btn p s" onclick="toMom(${o.ml},${o.mg})">📍 Mẹ</button>`:''}<button class="btn o s" onclick="acceptO('${o.id}')">🚀</button><button class="btn r s" onclick="rejectO('${o.id}')">❌</button></div><button class="btn g f s" style="margin-top:6px" onclick="completeO('${o.id}',${o.lat},${o.lng})">🏁 HOÀN THÀNH</button></div>`;}).join('');}
+    window.acceptO=function(id){const o=db.orders.find(x=>x.id===id);if(o)o.s='arrived';save(db);renderO();toast("🚀 Đã nhận!");};
+    window.rejectO=function(id){if(!confirm("Từ chối?"))return;const o=db.orders.find(x=>x.id===id);if(o)o.s='cancelled';save(db);renderO();toast("❌ Đã từ chối");};
+    window.completeO=function(id,lat,lng){const o=db.orders.find(x=>x.id===id);const f=o?fromCoords(o):HOME;const km=haversine(f.lat,f.lng,lat,lng);const pts=kmToPoints(km);if(o){o.s='completed';o.dist=km;}save(db);db.points=Math.round((db.points+pts)*10)/10;db.monthlyPoints=Math.round((db.monthlyPoints+pts)*10)/10;checkNewMonth();save(db);$('loyaltyPoints').textContent=db.points.toFixed(1);upLevel();upBadges();updateMonthlyDisplay();$('summaryDist').textContent=km.toFixed(1)+'km';$('summaryPoints').textContent='+'+pts;$('summaryModal').classList.add('show');renderO();toast(`🏁 +${pts} điểm`);};
+    window.toMom=(lat,lng)=>window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,'_blank');
+    window.openMap=function(dLa,dLo,title,mLa,mLo){$('mapModal').classList.add('show');if(mapI)mapI.remove();setTimeout(()=>{try{mapI=L.map('leafletMap',{center:[dLa,dLo],zoom:15,zoomControl:true});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(mapI);L.marker([dLa,dLo]).addTo(mapI).bindPopup(title).openPopup();if(mLa&&mLo)L.marker([mLa,mLo],{icon:L.divIcon({html:'👩‍🦰',iconSize:[24,24]})}).addTo(mapI);mapI.invalidateSize();}catch(e){}},200);$('btnAppleMaps').onclick=()=>{window.location.href=`maps://?daddr=${dLa},${dLo}`;};$('btnGoogleMaps').onclick=()=>{window.open(`https://www.google.com/maps/dir/?api=1&destination=${dLa},${dLo}`,'_blank');};}
+    function upLevel(){const p=db.points,lv=Math.floor(p/100)+1,nl=lv*100;$('levelText').textContent=lv;$('pointsToNext').textContent=Math.round(nl-p);$('levelProgress').style.width=((p%100)/100)*100+'%';}
+    function upBadges(){const p=db.points,t=db.orders.filter(o=>o.s==='completed').length;const e=BADGES.filter(b=>b.f(p,t));$('badgesContainer').innerHTML=e.map(b=>`<span class="badge ${b.c}">${b.i} ${b.n}</span>`).join('');$('badgesContent').innerHTML=BADGES.map(b=>{const h=b.f(p,t);return`<div>${b.i} <b>${b.n}</b> ${h?'✅':'🔒'}</div>`;}).join('');}
+    $('btnBadges').addEventListener('click',()=>{upBadges();$('badgesModal').classList.add('show');});
+    $('btnStats').addEventListener('click',()=>{const t=db.orders.filter(o=>o.s==='completed').length;const tk=db.orders.filter(o=>o.s==='completed').reduce((s,o)=>s+(o.dist||0),0);$('statsContent').innerHTML=`<p>📊 Tổng cuốc: <b>${t}</b></p><p>📏 Tổng km: <b>${tk.toFixed(1)}km</b></p><p>🏆 Điểm: <b>${db.points.toFixed(1)}</b></p>`;$('statsModal').classList.add('show');});
+    async function checkW(){try{const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=20.98&longitude=105.80&current=weather_code,temperature_2m,relative_humidity_2m,wind_speed_10m&forecast_days=1');const d=await r.json();const code=d.current.weather_code;const temp=d.current.temperature_2m;const humid=d.current.relative_humidity_2m;const wind=d.current.wind_speed_10m;const wm={0:'☀️ Trời quang',1:'🌤️ Có nắng',2:'⛅ Có mây',3:'☁️ Nhiều mây',45:'🌫️ Sương mù',51:'🌦️ Mưa phùn',61:'🌧️ Mưa nhỏ',63:'🌧️ Mưa vừa',65:'🌧️ Mưa to',80:'🌧️ Mưa rào',95:'⛈️ Dông'};const isRain=[51,53,55,61,63,65,80,81,82,95,96,99].includes(code);if(isRain){$('weatherAlert').innerHTML=`<div style="background:#e3f2fd;padding:8px;border-radius:18px;text-align:center;margin-bottom:8px">🌧️ ${wm[code]||'Mưa'} | 🌡️ ${temp}°C | 💧 ${humid}% | 💨 ${wind}km/h<br>Nhớ mang áo mưa!</div>`;}else{$('weatherAlert').innerHTML=`<div style="background:#e8f5e9;padding:8px;border-radius:18px;text-align:center;margin-bottom:8px">${wm[code]||'🌤️'} | 🌡️ ${temp}°C | 💧 ${humid}% | 💨 ${wind}km/h</div>`;}}catch(e){}}
+    $('btnWeather').addEventListener('click',async()=>{$('weatherModal').classList.add('show');$('weatherContent').innerHTML='<p>⏳ Đang tải...</p>';try{const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=20.98&longitude=105.80&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Bangkok&forecast_days=3');const d=await r.json();const wm={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',51:'🌦️',61:'🌧️',63:'🌧️',65:'🌧️',80:'🌧️',95:'⛈️'};const cur=d.current;const dai=d.daily;$('weatherContent').innerHTML=`<div style="background:#f5f5f5;border-radius:18px;padding:16px;margin-bottom:12px"><div style="font-size:60px">${wm[cur.weather_code]||'🌤️'}</div><div style="font-size:40px;font-weight:900">${cur.temperature_2m}°C</div><div>💧 Độ ẩm: <b>${cur.relative_humidity_2m}%</b> | 💨 Gió: <b>${cur.wind_speed_10m} km/h</b></div></div><p style="font-weight:700">📅 Dự báo 3 ngày:</p>${dai.time.map((t,i)=>`<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee"><span>${new Date(t).toLocaleDateString('vi-VN',{weekday:'short'})}</span><span>${wm[dai.weather_code[i]]||'🌤️'}</span><span>🌡️ <b>${dai.temperature_2m_max[i]}°</b>/${dai.temperature_2m_min[i]}°</span></div>`).join('')}`;}catch(e){$('weatherContent').innerHTML='<p style="color:red">❌ Lỗi</p>';}});
+    $('starContainer').addEventListener('click',function(e){if(!e.target.classList.contains('star'))return;starVal=+e.target.dataset.value;document.querySelectorAll('#starContainer .star').forEach(s=>{s.classList.toggle('active',+s.dataset.value<=starVal);s.textContent=+s.dataset.value<=starVal?'★':'☆';});});
+    $('btnSubmitRating').addEventListener('click',()=>{if(!starVal)return toast("⭐ Chọn sao!","e");const o=db.orders.find(x=>x.id===ratingOid);if(o){o.r=starVal;o.c=$('ratingComment').value.trim();save(db);}const pc=PR[starVal]||0;if(pc){db.points=Math.round((db.points+pc)*10)/10;save(db);$('loyaltyPoints').textContent=db.points.toFixed(1);upLevel();upBadges();}$('ratingModal').classList.remove('show');ratingOid=null;toast(pc<0?`⚠️ ${pc} điểm`:pc>0?`🎉 +${pc}`:"✅ OK!");});
+    $('btnCloseSummary').addEventListener('click',()=>$('summaryModal').classList.remove('show'));
+    $('btnInbox').addEventListener('click',()=>{const rd=db.orders.filter(o=>o.r);$('inboxContent').innerHTML=rd.length?rd.map(o=>`<div style="padding:6px">${'★'.repeat(o.r)+'☆'.repeat(5-o.r)} 📍${o.dest||'?'}<br><small>${o.c||''}</small></div>`).join(''):'<p>Chưa có</p>';$('inboxModal').classList.add('show');});
+    $('btnEat').addEventListener('click',()=>$('eatModal').classList.add('show'));$('btnHotOrder').addEventListener('click',()=>{$('hotOrderModal').classList.add('show');$('hotOrderDest').value='';$('hotOrderLat').value='';$('hotOrderLng').value='';});
+    $('btnConfirmEat').addEventListener('click',()=>{const amt=parseInt($('eatAmount').value);if(!amt)return;const ded=Math.round((amt/10000)*10)/10;db.points=Math.round((db.points-ded)*10)/10;save(db);$('loyaltyPoints').textContent=db.points.toFixed(1);upLevel();$('eatModal').classList.remove('show');toast(`🍽️ -${ded} điểm`);});
+    $('btnUseCurrentLocation').addEventListener('click',()=>{if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{$('hotOrderLat').value=p.coords.latitude.toFixed(4);$('hotOrderLng').value=p.coords.longitude.toFixed(4);});});
+    $('btnConfirmHotOrder').addEventListener('click',()=>{const lat=parseFloat($('hotOrderLat').value),lng=parseFloat($('hotOrderLng').value),dest=$('hotOrderDest').value.trim()||'🔥 Nóng';if(!lat||!lng)return toast("❌ Nhập tọa độ!","e");const o={id:Date.now().toString(),type:'ride',dest:dest,lat:lat,lng:lng,pt:'Ngay',s:'waiting',did:'dudu_minh',ts:new Date().toISOString()};db.orders.unshift(o);save(db);$('hotOrderModal').classList.remove('show');renderO();toast("🔥 Đã tạo!");});
+    document.addEventListener('click',function(e){if(e.target.classList.contains('close')){const m=document.getElementById(e.target.dataset.modal);if(m)m.classList.remove('show');if(e.target.dataset.modal==='mapModal'&&mapI){mapI.remove();mapI=null;}}});
+
+    // CHAT
+    function openChat(partner){$('chatPartner').textContent=partner;$('chatModal').classList.add('show');$('chatMessages').innerHTML='<p style="text-align:center;color:var(--tl);padding:20px">⏳ Đang tải...</p>';loadChat();setupChat();}
+    async function loadChat(){if(!sb){$('chatMessages').innerHTML='<p style="text-align:center;color:red">❌ Chưa kết nối</p>';return;}try{const{data,error}=await sb.from('messages').select('*').order('created_at',{ascending:true}).limit(50);if(error)throw error;const c=$('chatMessages');if(!data||!data.length){c.innerHTML='<p style="text-align:center;color:var(--tl)">💬 Chưa có tin nhắn</p>';return;}c.innerHTML=data.map(m=>{const isMe=(m.sender==='driver'&&role==='driver')||(m.sender==='mom'&&role==='mom');const name=m.sender==='driver'?'👨‍✈️':'👩‍🦰';const time=new Date(m.created_at).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});return`<div style="text-align:${isMe?'right':'left'};margin:3px 0"><span class="chat-bub ${m.sender==='driver'?'drv':'mom'}"><small style="opacity:.7">${name} ${time}</small><br>${m.text}</span></div>`;}).join('');c.scrollTop=c.scrollHeight;}catch(e){$('chatMessages').innerHTML='<p style="color:red">❌ Lỗi</p>';}}
+    function setupChat(){if(!sb)return;if(chatChannel)sb.removeChannel(chatChannel);chatChannel=sb.channel('chat-'+Date.now()).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},()=>{loadChat();}).subscribe();}
+    async function sendChat(){const input=$('chatInput');const text=input.value.trim();if(!text||!sb)return;const sender=role==='driver'?'driver':'mom';input.value='';const c=$('chatMessages');const time=new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});c.innerHTML+=`<div style="text-align:right;margin:3px 0"><span class="chat-bub drv"><small style="opacity:.7">👤 ${time}</small><br>${text}</span></div>`;c.scrollTop=c.scrollHeight;try{await sb.from('messages').insert([{sender,text}]);}catch(e){toast("❌ Lỗi gửi!","e");}input.focus();}
+    $('btnChatMom')?.addEventListener('click',()=>openChat('Tài xế Đu Đủ'));
+    $('btnChatDriver')?.addEventListener('click',()=>openChat('Mẹ yêu'));
+    $('btnSendChat')?.addEventListener('click',sendChat);
+    $('chatInput')?.addEventListener('keypress',e=>{if(e.key==='Enter')sendChat();});
+
+    setTimeout(()=>{const s=$('splash');if(s)s.classList.add('hide');},2000);
+    $('loyaltyPoints').textContent=db.points.toFixed(1);upLevel();updateMonthlyDisplay();
+})();
+</script>
+</body>
+</html>
